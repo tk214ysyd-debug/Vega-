@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vega AI</title>
+  <meta name="theme-color" content="#181b24">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vega AI">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
+  <link rel="manifest" id="manifest-placeholder">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg-dark: #0f1117; --panel-bg: #181b24; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4; --accent-red: #ef4444; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-color: rgba(255, 255, 255, 0.08); --user-msg: #27272a; --vega-msg: #1e293b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    header { padding: 16px 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; z-index: 10; padding-top: max(16px, env(safe-area-inset-top)); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+    .brand-info h1 { font-size: 18px; font-weight: 700; }
+    .status-badge { font-size: 12px; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .icon-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+    .clear-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    #chat-container { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .message { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 15px; line-height: 1.5; word-break: break-word; }
+    .message.user { align-self: flex-end; background-color: var(--user-msg); border-bottom-right-radius: 4px; color: #fff; }
+    .message.vega { align-self: flex-start; background-color: var(--vega-msg); border-bottom-left-radius: 4px; border: 1px solid var(--border-color); }
+    .msg-image { max-width: 100%; max-height: 350px; border-radius: 12px; margin-top: 10px; display: block; border: 1px solid var(--border-color); }
+    .input-wrapper { padding: 16px 24px; background: var(--panel-bg); border-top: 1px solid var(--border-color); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    .image-preview { display: none; align-items: center; gap: 10px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 8px; width: fit-content; }
+    .image-preview img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+    .image-preview .remove-btn { cursor: pointer; color: #ef4444; font-weight: bold; }
+    .input-box { display: flex; gap: 8px; align-items: flex-end; background: var(--bg-dark); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); }
+    textarea { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; resize: none; outline: none; max-height: 120px; padding: 8px 0; }
+    .action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .mic-btn.recording { color: var(--accent-red); background: rgba(239, 68, 68, 0.15); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .send-btn { background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); color: #fff; }
+    .typing { display: flex; gap: 4px; align-items: center; padding: 12px 18px; background: var(--vega-msg); border-radius: 16px; width: fit-content; border-bottom-left-radius: 4px; }
+    .typing span { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+    .typing span:nth-child(1) { animation-delay: -0.32s; } .typing span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    .icon { width: 20px; height: 20px; fill: currentColor; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="avatar">V</div>
+      <div class="brand-info"><h1>Vega AI</h1><div class="status-badge"><span class="status-dot"></span><span id="status-text">Hazır</span></div></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn active" id="tts-toggle-btn"><svg class="icon" id="tts-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+      <button class="clear-btn" id="clear-btn">Temizle</button>
+    </div>
+  </header>
+  <div id="chat-container"></div>
+  <div class="input-wrapper">
+    <div class="image-preview" id="image-preview"><img id="preview-img" src="" alt="Görsel"><span class="remove-btn" id="remove-img-btn">&times;</span></div>
+    <div class="input-box">
+      <input type="file" id="file-input" accept="image/*" style="display: none;">
+      <button class="action-btn" id="upload-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+      <textarea id="text-input" rows="1" placeholder="Vega'ya yazın veya mikrofon ile konuşun..."></textarea>
+      <button class="action-btn mic-btn" id="mic-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></button>
+      <button class="action-btn send-btn" id="send-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
+  <script>
+    const manifest = { "name": "Vega AI", "short_name": "Vega", "start_url": "./", "display": "standalone", "background_color": "#0f1117", "theme_color": "#181b24", "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/4712/4712035.png", "sizes": "192x192", "type": "image/png" }] };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    document.getElementById('manifest-placeholder').setAttribute('href', URL.createObjectURL(manifestBlob));
+    if ('serviceWorker' in navigator) {
+      const swCode = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => self.clients.claim()); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`;
+      navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: 'text/javascript' }))).catch(()=>{});
+    }
+    const chatContainer = document.getElementById('chat-container'), textInput = document.getElementById('text-input'), sendBtn = document.getElementById('send-btn'), micBtn = document.getElementById('mic-btn'), uploadBtn = document.getElementById('upload-btn'), fileInput = document.getElementById('file-input'), imagePreview = document.getElementById('image-preview'), previewImg = document.getElementById('preview-img'), removeImgBtn = document.getElementById('remove-img-btn'), clearBtn = document.getElementById('clear-btn'), statusText = document.getElementById('status-text'), ttsToggleBtn = document.getElementById('tts-toggle-btn'), ttsIcon = document.getElementById('tts-icon');
+    let history = JSON.parse(localStorage.getItem('vega_pwa_history') || '[]'), pendingImage = null, isTtsEnabled = true, recognition = null, isRecording = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition(); recognition.lang = 'tr-TR'; recognition.interimResults = true;
+      recognition.onstart = () => { isRecording = true; micBtn.classList.add('recording'); statusText.textContent = 'Dinliyor...'; };
+      recognition.onresult = (e) => { textInput.value = Array.from(e.results).map(r => r[0].transcript).join(''); };
+      recognition.onerror = () => stopRecording();
+      recognition.onend = () => { stopRecording(); if (textInput.value.trim().length > 0) sendMessage(); };
+    } else { micBtn.style.display = 'none'; }
+    function stopRecording() { isRecording = false; micBtn.classList.remove('recording'); statusText.textContent = 'Hazır'; }
+    micBtn.addEventListener('click', () => { if(!recognition) return; if(isRecording) recognition.stop(); else { window.speechSynthesis?.cancel(); recognition.start(); } });
+    function speakText(text) {
+      if (!isTtsEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text.replace(/[*_#`~]/g, '').trim());
+      utterance.lang = 'tr-TR'; window.speechSynthesis.speak(utterance);
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      if(history.length === 0) renderMessage('vega', 'Merhaba! Ben Vega. Konuşabilir, yazabilir veya resim çizdirebilirsin!');
+      else history.forEach(msg => renderMessage(msg.role, msg.displayText, msg.imageDataUrl));
+    });
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader(); reader.onload = (evt) => { pendingImage = evt.target.result; previewImg.src = pendingImage; imagePreview.style.display = 'flex'; }; reader.readAsDataURL(file);
+    });
+    removeImgBtn.addEventListener('click', () => { pendingImage = null; fileInput.value = ''; imagePreview.style.display = 'none'; });
+    clearBtn.addEventListener('click', () => { history = []; localStorage.removeItem('vega_pwa_history'); chatContainer.innerHTML = ''; renderMessage('vega', 'Temizlendi.'); });
+    function renderMessage(role, text, imageUrl = null) {
+      const msgDiv = document.createElement('div'); msgDiv.className = `message ${role}`;
+      if(text) { const t = document.createElement('div'); t.innerText = text; msgDiv.appendChild(t); }
+      if(imageUrl) { const img = document.createElement('img'); img.src = imageUrl; img.className = 'msg-image'; msgDiv.appendChild(img); }
+      chatContainer.appendChild(msgDiv); chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    async function sendMessage() {
+      const text = textInput.value.trim(); if(!text && !pendingImage) return;
+      const curImg = pendingImage; renderMessage('user', text, curImg);
+      history.push({ role: 'user', displayText: text, imageDataUrl: curImg });
+      textInput.value = ''; pendingImage = null; imagePreview.style.display = 'none';
+      if(/(çiz|resim|görsel)/i.test(text) && !curImg) {
+        const clean = text.replace(/(resmini|görselini|çiz|yap|bana)/gi, '').trim();
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?width=800&height=800&nologo=true&seed=${Math.floor(Math.random()*1000000)}`;
+        renderMessage('vega', `İşte görselin: "${clean}"`, url); speakText("İşte görseli hazırladım!");
+        history.push({ role: 'vega', displayText: `İşte görselin: "${clean}"`, imageDataUrl: url });
+      } else {
+        const reply = curImg ? "Görseli inceledim!" : "Anladım, sana yardımcı olabilirim.";
+        renderMessage('vega', reply); speakText(reply);
+        history.push({ role: 'vega', displayText: reply, imageDataUrl: null });
+      }
+      localStorage.setItem('vega_pwa_history', JSON.stringify(history));
+    }
+    sendBtn.addEventListener('click', sendMessage);
+  </script>
+</body>
+  </html>
+  
